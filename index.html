@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Noun Blaster Showdown</title>
+<style>
+  body {
+    font-family: Arial, sans-serif;
+    background-color: #f5f5f5;
+    color: #333;
+    margin: 0;
+    padding: 10px;
+    text-align: center;
+  }
+  .game-container {
+    max-width: 100%;
+    max-height: 700px;
+    margin: auto;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    align-items: center;
+  }
+  h1 {
+    font-size: 24px;
+    margin-bottom: 5px;
+  }
+  .instructions {
+    background-color: #e8f0fe;
+    border: 1px solid #3f51b5;
+    border-radius: 10px;
+    padding: 10px;
+    font-size: 14px;
+    margin: 10px 0;
+    width: 100%;
+    max-width: 700px;
+  }
+  .question-box {
+    font-size: 20px;
+    margin: 10px 0;
+  }
+  .buttons {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 8px;
+    margin: 10px 0;
+    width: 100%;
+    max-width: 700px;
+  }
+  .buttons button, .controls button {
+    background-color: #3f51b5;
+    color: white;
+    padding: 8px;
+    border: none;
+    border-radius: 8px;
+    font-size: 14px;
+    cursor: pointer;
+  }
+  .feedback {
+    font-size: 16px;
+    font-weight: bold;
+    min-height: 40px;
+  }
+  .correct {
+    color: #3f51b5;
+    background-color: #e8f0fe;
+    padding: 8px;
+    border-radius: 8px;
+  }
+  .incorrect {
+    color: white;
+    background-color: #f44336;
+    padding: 8px;
+    border-radius: 8px;
+  }
+  #score, #timerDisplay {
+    font-weight: bold;
+    margin-top: 6px;
+  }
+  .controls {
+    display: flex;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-top: 8px;
+  }
+</style>
+</head>
+<body>
+<div class="game-container">
+  <h1>Noun Blaster Showdown</h1>
+  <div class="instructions">
+    👾 Identify the type of noun shown. Click the correct button before time runs out.<br>
+    💬 Some words have more than one correct answer. Be sharp!<br>
+    ⏱️ You have 60 seconds to earn points. Good luck, grammar warrior!
+  </div>
+  <div id="questionBox" class="question-box">Press Start to Begin!</div>
+  <div class="buttons" id="choices"></div>
+  <div class="feedback" id="feedback"></div>
+  <div id="score">Score: 0</div>
+  <div id="timerDisplay">Time: 0</div>
+  <div class="controls">
+    <button onclick="startGame()">Start</button>
+    <button onclick="pauseGame()">Pause</button>
+    <button onclick="resumeGame()">Resume</button>
+    <button onclick="stopGame()">Stop</button>
+  </div>
+</div>
+<script>
+const nounData = [
+  { text: "dog", type: ["Common", "Singular"] },
+  { text: "school", type: ["Common"] },
+  { text: "New York", type: ["Proper"] },
+  { text: "team", type: ["Collective"] },
+  { text: "the boy’s shoes", type: ["Possessive"] , highlight: "boy" },
+  { text: "joy", type: ["Abstract"] },
+  { text: "books", type: ["Plural"] },
+  { text: "book", type: ["Singular", "Common"] },
+  { text: "the children’s toys", type: ["Possessive"] , highlight: "children" },
+  { text: "anger", type: ["Abstract"] },
+  { text: "Atlanta", type: ["Proper"] },
+  { text: "teachers", type: ["Plural"] },
+  { text: "teacher", type: ["Singular", "Common"] },
+  { text: "crowd", type: ["Collective"] },
+  { text: "the boss’s office", type: ["Possessive"] , highlight: "boss" },
+  { text: "laughter", type: ["Abstract"] },
+  { text: "car", type: ["Common", "Singular"] }
+];
+const allTypes = ["Common", "Proper", "Collective", "Possessive", "Abstract", "Plural", "Singular"];
+let score = 0, current = null, timerInterval, timeLeft = 60;
+
+function startGame() {
+  score = 0;
+  timeLeft = 60;
+  document.getElementById("score").textContent = "Score: 0";
+  document.getElementById("timerDisplay").textContent = `Time: ${timeLeft}`;
+  clearInterval(timerInterval);
+  timerInterval = setInterval(() => {
+    timeLeft--;
+    document.getElementById("timerDisplay").textContent = `Time: ${timeLeft}`;
+    if (timeLeft <= 0) {
+      clearInterval(timerInterval);
+      document.getElementById("feedback").innerHTML = `<div class='incorrect'>⏱️ Time's up! Final Score: ${score}</div>`;
+      document.getElementById("questionBox").textContent = "Game Over";
+      document.getElementById("choices").innerHTML = "";
+    }
+  }, 1000);
+  nextQuestion();
+}
+
+function pauseGame() {
+  clearInterval(timerInterval);
+}
+function resumeGame() {
+  timerInterval = setInterval(() => {
+    timeLeft--;
+    document.getElementById("timerDisplay").textContent = `Time: ${timeLeft}`;
+    if (timeLeft <= 0) {
+      clearInterval(timerInterval);
+      document.getElementById("feedback").innerHTML = `<div class='incorrect'>⏱️ Time's up! Final Score: ${score}</div>`;
+      document.getElementById("questionBox").textContent = "Game Over";
+      document.getElementById("choices").innerHTML = "";
+    }
+  }, 1000);
+}
+function stopGame() {
+  clearInterval(timerInterval);
+  score = 0;
+  timeLeft = 0;
+  document.getElementById("score").textContent = "Score: 0";
+  document.getElementById("timerDisplay").textContent = "Time: 0";
+  document.getElementById("questionBox").textContent = "Game Stopped";
+  document.getElementById("choices").innerHTML = "";
+  document.getElementById("feedback").innerHTML = "";
+}
+function nextQuestion() {
+  document.getElementById("feedback").innerHTML = "";
+  current = nounData[Math.floor(Math.random() * nounData.length)];
+  let displayText = current.text;
+  if (current.type.includes("Possessive") && current.highlight) {
+    const regex = new RegExp(current.highlight, 'gi');
+    displayText = displayText.replace(regex, `<b style='color:#3f51b5;'>${current.highlight}</b>`);
+  }
+  document.getElementById("questionBox").innerHTML = `Identify the noun type:<br>“${displayText}”`;
+  const options = [...allTypes].sort(() => 0.5 - Math.random()).slice(0, 4);
+  if (!options.some(t => current.type.includes(t))) options[0] = current.type[0];
+  options.sort(() => 0.5 - Math.random());
+  document.getElementById("choices").innerHTML = options.map(type => `<button onclick="checkAnswer('${type}')">${type}</button>`).join('');
+}
+function checkAnswer(selected) {
+  if (current.type.includes(selected)) {
+    score++;
+    let extras = current.type.filter(t => t !== selected);
+    let note = extras.length ? `<br><small>Also acceptable: ${extras.join(", ")}</small>` : "";
+    document.getElementById("feedback").innerHTML = `<div class='correct'>Correct! You nailed it.${note}</div>`;
+  } else {
+    document.getElementById("feedback").innerHTML = `<div class='incorrect'>Nope! That noun just filed a grammar complaint.</div>`;
+  }
+  document.getElementById("score").textContent = `Score: ${score}`;
+  setTimeout(nextQuestion, 1000);
+}
+</script>
+</body>
+</html>
